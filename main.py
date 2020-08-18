@@ -47,7 +47,8 @@ class Item:
 
 
 def get_items_per_url(url):
-    qq = requests.get(url)
+    agent = {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36'}
+    qq = requests.get(url, headers=agent)
 
     text = qq.text
     # with open(r'C:\Users\Kleinanzeigen\Desktop\qq.html', 'r') as f:
@@ -95,6 +96,20 @@ def error(update, context):
     print('Update "%s" caused error "%s"', update, context.error)
 
 
+def end(update: Update, context):
+    logger = utils.get_logger()
+    user = update.message.from_user
+    name = user.first_name + ' ' + user.last_name
+    logger.info('Removing Job for user: ' + name)
+    try:
+        scheduler.remove_job(str(update.effective_chat.id))
+        logger.info('Removed Job for user: ' + name)
+        update.message.reply_text('Your job has been removed!')
+
+    except Exception as e:
+        logger.error(e)
+        update.message.reply_text('You dont have any job yet!')
+
 def echo(update: Update, context):
     msg: Message = update.message
 
@@ -131,6 +146,7 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("end", end))
     dp.add_handler(MessageHandler(Filters.text, echo))
 
     # log all errors
